@@ -1,0 +1,257 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  ADMIN
+  PLAYER
+  FAN
+}
+
+enum MatchStatus {
+  PENDING
+  READY
+  BETTING
+  STARTED
+  FINISHED
+  CANCELLED
+}
+
+enum TransactionType {
+  DEPOSIT
+  WITHDRAWAL
+  ENTRY_FEE
+  PLAYER_BET
+  PLAYER_WINNING
+  FAN_BET
+  FAN_WINNING
+  ADMIN_REVENUE
+}
+
+enum TransactionStatus {
+  PENDING
+  COMPLETED
+  FAILED
+  REFUNDED
+}
+
+model User {
+  id                String    @id @default(uuid())
+  email             String    @unique
+  name              String
+  phoneNumber       String    @unique
+  password          String
+  role              UserRole  @default(FAN)
+  isActive          Boolean   @default(true)
+  walletBalance     Float     @default(0.0)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  // Relations
+  matchesAsPlayer1  Match[]   @relation("Player1")
+  matchesAsPlayer2  Match[]   @relation("Player2")
+  playerBets        PlayerBet[]
+  fanBets           FanBet[]
+  transactions      Transaction[]
+  withdrawalReqs    WithdrawalRequest[]
+  createdInviteCodes InviteCode[] @relation("InviteCodeCreator")
+  usedInviteCodes    InviteCode[] @relation("InviteCodeUsedBy")
+  matchEvents       MatchEvent[]
+  wonMatches        Match[]   @relation("MatchWinner")
+  lineups           Lineup[]
+
+  @@index([email])
+  @@index([phoneNumber])
+  @@index([role])
+}
+
+model InviteCode {
+  id          String   @id @default(uuid())
+  code        String   @unique
+  matchId     String
+  createdBy   String
+  expiresAt   DateTime
+  createdAt   DateTime @default(now())
+  usedBy      String?
+
+  match       Match    @relation(fields: [matchId], references: [id])
+  creator     User     @relation("InviteCodeCreator", fields: [createdBy], references: [id])
+  userUsed    User?    @relation("InviteCodeUsedBy", fields: [usedBy], references: [id])
+
+  @@index([code])
+  @@index([matchId])
+}
+
+model Match {
+  id               String        @id @default(uuid())
+  player1Id        String
+  player2Id        String?
+  player1TeamId    String?
+  player2TeamId    String?
+  player1Formation String?
+  player2Formation String?
+  entryFee         Float         @default(10.0)
+  player1BetAmount Float?
+  player2BetAmount Float?
+  totalPlayerBet   Float         @default(0.0)
+  fanBetPool       Float         @default(0.0)
+  winnerId         String?
+  score            String?
+  status           MatchStatus   @default(PENDING)
+  scheduledStart   DateTime?
+  startedAt        DateTime?
+  finishedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  // Relations
+  player1          User          @relation("Player1", fields: [player1Id], references: [id])
+  player2          User?         @relation("Player2", fields: [player2Id], references: [id])
+  player1Team      Team?         @relation("HomeTeam", fields: [player1TeamId], references: [id])
+  player2Team      Team?         @relation("AwayTeam", fields: [player2TeamId], references: [id])
+  winner           User?         @relation("MatchWinner", fields: [winnerId], references: [id])
+  inviteCodes      InviteCode[]
+  playerBets       PlayerBet[]
+  fanBets          FanBet[]
+  matchEvents      MatchEvent[]
+  lineups          Lineup[]
+
+  @@index([player1Id])
+  @@index([player2Id])
+  @@index([status])
+  @@index([scheduledStart])
+}
+
+model PlayerBet {
+  id        String   @id @default(uuid())
+  matchId   String
+  playerId  String
+  amount    Float
+  placedAt  DateTime @default(now())
+
+  match     Match    @relation(fields: [matchId], references: [id])
+  player    User     @relation(fields: [playerId], references: [id])
+
+  @@unique([matchId, playerId])
+  @@index([matchId])
+}
+
+model FanBet {
+  id             String   @id @default(uuid())
+  matchId        String
+  fanId          String
+  amount         Float
+  pickedPlayerId String
+  placedAt       DateTime @default(now())
+  isWinner       Boolean?
+  winnings       Float?   @default(0.0)
+
+  match          Match    @relation(fields: [matchId], references: [id])
+  fan            User     @relation(fields: [fanId], references: [id])
+
+  @@index([matchId])
+  @@index([fanId])
+}
+
+model Transaction {
+  id            String          @id @default(uuid())
+  userId        String
+  amount        Float
+  type          TransactionType
+  status        TransactionStatus @default(PENDING)
+  reference     String          @unique
+  description   String?
+  mpesaReceipt  String?
+  metadata      Json?
+  createdAt     DateTime        @default(now())
+  completedAt   DateTime?
+
+  user          User            @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([reference])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model WithdrawalRequest {
+  id             String          @id @default(uuid())
+  userId         String
+  amount         Float
+  phoneNumber    String
+  status         TransactionStatus @default(PENDING)
+  approvedBy     String?
+  approvedAt     DateTime?
+  rejectedReason String?
+  mpesaResponse  Json?
+  createdAt      DateTime        @default(now())
+  completedAt    DateTime?
+
+  user           User            @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([status])
+}
+
+model Team {
+  id          String    @id @default(uuid())
+  apiId       Int       @unique
+  name        String
+  shortName   String?
+  country     String
+  league      String
+  logo        String?
+  createdAt   DateTime  @default(now())
+
+  players     Player[]
+  homeMatches Match[]   @relation("HomeTeam")
+  awayMatches Match[]   @relation("AwayTeam")
+  lineups     Lineup[]
+}
+
+model Player {
+  id          String   @id @default(uuid())
+  apiId       Int      @unique
+  name        String
+  position    String
+  number      Int?
+  teamId      String
+  createdAt   DateTime @default(now())
+
+  team        Team     @relation(fields: [teamId], references: [id])
+  // lineups removed because starting11 is stored as JSON in Lineup
+}
+
+model Lineup {
+  id         String   @id @default(uuid())
+  matchId    String
+  playerId   String
+  teamId     String
+  formation  String
+  starting11 Json
+  substitutes Json?
+  createdAt  DateTime @default(now())
+
+  match      Match    @relation(fields: [matchId], references: [id])
+  user       User     @relation(fields: [playerId], references: [id])
+  team       Team     @relation(fields: [teamId], references: [id])
+}
+
+model MatchEvent {
+  id        String   @id @default(uuid())
+  matchId   String
+  eventType String
+  playerId  String?
+  userId    String?
+  minute    Int
+  detail    String?
+  createdAt DateTime @default(now())
+
+  match     Match    @relation(fields: [matchId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+}

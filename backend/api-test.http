@@ -1,0 +1,193 @@
+### Variables
+@baseUrl = http://localhost:5000/api
+@adminEmail = admin@pitchking.com
+@adminPassword = Admin@123
+@playerEmail = player1@example.com
+@playerPassword = Player@123
+@fanEmail = fan1@example.com
+@fanPassword = Fan@123
+
+### ==================== AUTH ====================
+
+### Register a new player
+POST {{baseUrl}}/auth/register
+Content-Type: application/json
+
+{
+  "name": "Test Player",
+  "email": "testplayer@example.com",
+  "phoneNumber": "254711223344",
+  "password": "test123",
+  "role": "PLAYER"
+}
+
+### Login as Admin
+# @name adminLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+### Save admin token
+@adminToken = {{adminLogin.response.body.data.token}}
+
+### Login as Player
+# @name playerLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{playerEmail}}",
+  "password": "{{playerPassword}}"
+}
+
+### Save player token
+@playerToken = {{playerLogin.response.body.data.token}}
+
+### Login as Fan
+# @name fanLogin
+POST {{baseUrl}}/auth/login
+Content-Type: application/json
+
+{
+  "email": "{{fanEmail}}",
+  "password": "{{fanPassword}}"
+}
+
+### Save fan token
+@fanToken = {{fanLogin.response.body.data.token}}
+
+### Get current user (me)
+GET {{baseUrl}}/auth/me
+Authorization: Bearer {{playerToken}}
+
+### ==================== WALLET ====================
+
+### Get wallet balance
+GET {{baseUrl}}/wallet/balance
+Authorization: Bearer {{playerToken}}
+
+### Request deposit (M-Pesa STK Push)
+POST {{baseUrl}}/wallet/deposit
+Authorization: Bearer {{playerToken}}
+Content-Type: application/json
+
+{
+  "amount": 100
+}
+
+### Request withdrawal (requires admin approval)
+POST {{baseUrl}}/wallet/withdraw
+Authorization: Bearer {{playerToken}}
+Content-Type: application/json
+
+{
+  "amount": 50
+}
+
+### Get transaction history
+GET {{baseUrl}}/wallet/transactions?page=1&limit=10
+Authorization: Bearer {{playerToken}}
+
+### ==================== MATCHES ====================
+
+### Get live matches
+GET {{baseUrl}}/matches/live
+Authorization: Bearer {{playerToken}}
+
+### Create a match (Player only)
+POST {{baseUrl}}/matches/create
+Authorization: Bearer {{playerToken}}
+Content-Type: application/json
+
+{
+  "player1BetAmount": 100,
+  "player1TeamId": "team-uuid-placeholder",
+  "player1Formation": "4-3-3",
+  "opponentEmail": "fan1@example.com"
+}
+
+### Join match using invite code (replace code with actual)
+POST {{baseUrl}}/matches/join/ABC123
+Authorization: Bearer {{playerToken}}
+Content-Type: application/json
+
+{
+  "player2TeamId": "team-uuid-placeholder",
+  "player2BetAmount": 150,
+  "formation": "4-4-2"
+}
+
+### Place player bet on a match
+POST {{baseUrl}}/matches/{{matchId}}/bet
+Authorization: Bearer {{playerToken}}
+Content-Type: application/json
+
+{
+  "amount": 100
+}
+
+### Get match details
+GET {{baseUrl}}/matches/{{matchId}}
+Authorization: Bearer {{playerToken}}
+
+### ==================== BETS (FAN) ====================
+
+### Place fan bet on a match
+POST {{baseUrl}}/bets/fan
+Authorization: Bearer {{fanToken}}
+Content-Type: application/json
+
+{
+  "matchId": "{{matchId}}",
+  "amount": 50,
+  "pickedPlayerId": "player-uuid"
+}
+
+### Get bets for a match
+GET {{baseUrl}}/bets/match/{{matchId}}
+Authorization: Bearer {{fanToken}}
+
+### ==================== ADMIN ====================
+
+### Get all users (Admin only)
+GET {{baseUrl}}/admin/users
+Authorization: Bearer {{adminToken}}
+
+### Get all matches (Admin only)
+GET {{baseUrl}}/admin/matches
+Authorization: Bearer {{adminToken}}
+
+### Get pending withdrawal requests
+GET {{baseUrl}}/admin/withdrawals
+Authorization: Bearer {{adminToken}}
+
+### Approve a withdrawal (replace requestId)
+POST {{baseUrl}}/admin/withdrawals/{{requestId}}/approve
+Authorization: Bearer {{adminToken}}
+
+### Reject a withdrawal
+POST {{baseUrl}}/admin/withdrawals/{{requestId}}/reject
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "reason": "Insufficient balance"
+}
+
+### Get revenue statistics
+GET {{baseUrl}}/admin/revenue
+Authorization: Bearer {{adminToken}}
+
+### Admin withdraw to own M-Pesa
+POST {{baseUrl}}/admin/withdraw
+Authorization: Bearer {{adminToken}}
+Content-Type: application/json
+
+{
+  "amount": 500,
+  "phoneNumber": "254700000000"
+}
