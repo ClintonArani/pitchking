@@ -59,7 +59,11 @@ export const placePlayerBet = async (req, res, next) => {
       data: bet
     });
   } catch (error) {
-    next(error);
+    // Send the actual error message
+    res.status(400).json({
+      success: false,
+      message: error.message
+    });
   }
 };
 

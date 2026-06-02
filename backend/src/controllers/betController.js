@@ -1,3 +1,4 @@
+import prisma from '../config/database.js';
 import { BettingService } from '../services/bettingService.js';
 
 export const placeFanBet = async (req, res, next) => {
@@ -23,18 +24,25 @@ export const getMatchBets = async (req, res, next) => {
     const [playerBets, fanBets] = await Promise.all([
       prisma.playerBet.findMany({
         where: { matchId },
-        include: { player: { select: { name: true } } }
+        include: { player: { select: { name: true, id: true } } }
       }),
       prisma.fanBet.findMany({
         where: { matchId },
-        include: { fan: { select: { name: true } } },
-        take: 50
+        include: { fan: { select: { name: true, id: true } } },
+        orderBy: { placedAt: 'desc' },
+        take: 100
       })
     ]);
     
+    const totalFanPool = fanBets.reduce((sum, bet) => sum + bet.amount, 0);
+    
     res.json({
       success: true,
-      data: { playerBets, fanBets, totalFanPool: fanBets.reduce((sum, b) => sum + b.amount, 0) }
+      data: {
+        playerBets,
+        fanBets,
+        totalFanPool
+      }
     });
   } catch (error) {
     next(error);

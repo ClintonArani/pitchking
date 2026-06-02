@@ -5,11 +5,13 @@ export const mpesaConfig = {
   consumerKey: process.env.MPESA_CONSUMER_KEY,
   consumerSecret: process.env.MPESA_CONSUMER_SECRET,
   passkey: process.env.MPESA_PASSKEY,
-  shortcode: process.env.MPESA_SHORTCODE,
+  shortcode: process.env.MPESA_SHORTCODE || '174379',
   environment: process.env.MPESA_ENVIRONMENT || 'sandbox',
   callbackBaseUrl: process.env.MPESA_CALLBACK_BASE_URL,
+  initiatorName: process.env.MPESA_INITIATOR_NAME || 'apitest',
+  initiatorPassword: process.env.MPESA_INITIATOR_PASSWORD,
   
-  // API URLs
+  // API URLs (unchanged)
   get authUrl() {
     return this.environment === 'production'
       ? 'https://api.safaricom.co.ke/oauth/v1/generate?grant_type=client_credentials'

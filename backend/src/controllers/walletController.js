@@ -66,6 +66,8 @@ export const requestWithdrawal = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Insufficient balance' });
     }
     
+    console.log('User phone number:', req.user.phoneNumber); // Debug log
+    
     const withdrawalRequest = await prisma.withdrawalRequest.create({
       data: {
         userId: req.user.id,

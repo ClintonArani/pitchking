@@ -85,44 +85,44 @@ export const approveWithdrawal = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Insufficient user balance' });
     }
     
-    // Process B2C payment
-    try {
-      const b2cResponse = await MpesaService.b2c(request.phoneNumber, request.amount);
+    // Process B2C payment - COMMENTED OUT FOR MOCK TESTING
+    // try {
+    //   const b2cResponse = await MpesaService.b2c(request.phoneNumber, request.amount);
       
-      // Debit user wallet
+      // Debit user wallet (still happens)
       await WalletService.debit(
         request.userId,
         request.amount,
         TransactionType.WITHDRAWAL,
         `WITHDRAWAL_${requestId}`,
-        'Admin approved withdrawal'
+        'Admin approved withdrawal (MOCK - no actual M-Pesa sent)'
       );
       
-      // Update request
+      // Update request as completed (without real B2C)
       await prisma.withdrawalRequest.update({
         where: { id: requestId },
         data: {
           status: TransactionStatus.COMPLETED,
           approvedBy: req.user.id,
           approvedAt: new Date(),
-          mpesaResponse: b2cResponse,
+          // mpesaResponse: b2cResponse, // commented out
           completedAt: new Date()
         }
       });
       
-      logger.info(`Withdrawal ${requestId} approved by admin ${req.user.id}`);
-      res.json({ success: true, message: 'Withdrawal approved and processed' });
-    } catch (error) {
-      logger.error('B2C failed:', error);
-      await prisma.withdrawalRequest.update({
-        where: { id: requestId },
-        data: {
-          status: TransactionStatus.FAILED,
-          rejectedReason: 'M-Pesa payment failed'
-        }
-      });
-      throw error;
-    }
+      logger.info(`Withdrawal ${requestId} approved by admin ${req.user.id} (MOCK mode)`);
+      res.json({ success: true, message: 'Withdrawal approved (MOCK - no money sent to M-Pesa)' });
+    // } catch (error) {
+    //   logger.error('B2C failed:', error);
+    //   await prisma.withdrawalRequest.update({
+    //     where: { id: requestId },
+    //     data: {
+    //       status: TransactionStatus.FAILED,
+    //       rejectedReason: 'M-Pesa payment failed'
+    //     }
+    //   });
+    //   throw error;
+    // }
   } catch (error) {
     next(error);
   }
@@ -197,22 +197,22 @@ export const adminWithdraw = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Insufficient admin balance' });
     }
     
-    // Process B2C to admin's personal M-Pesa
-    const b2cResponse = await MpesaService.b2c(phoneNumber, amount);
+    // Process B2C to admin's personal M-Pesa - COMMENTED OUT FOR MOCK TESTING
+    // const b2cResponse = await MpesaService.b2c(phoneNumber, amount);
     
-    // Debit admin wallet
+    // Debit admin wallet (still happens)
     await WalletService.debit(
       admin.id,
       amount,
       TransactionType.WITHDRAWAL,
       `ADMIN_WITHDRAW_${Date.now()}`,
-      'Admin withdrawal'
+      'Admin withdrawal (MOCK - no actual M-Pesa sent)'
     );
     
     res.json({
       success: true,
-      message: 'Admin withdrawal processed',
-      data: b2cResponse
+      message: 'Admin withdrawal processed (MOCK - no money sent to M-Pesa)',
+      // data: b2cResponse // removed
     });
   } catch (error) {
     next(error);

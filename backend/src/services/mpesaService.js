@@ -87,10 +87,13 @@ export class MpesaService {
   
   static async b2c(phoneNumber, amount, commandId = 'BusinessPayment') {
     try {
+      // Generate security credential (base64 encoded initiator password)
+      const securityCredential = Buffer.from(mpesaConfig.initiatorPassword).toString('base64');
+      
       const token = await this.getAccessToken();
       const data = {
-        InitiatorName: 'apitest',
-        SecurityCredential: 'TODO: Generate security credential',
+        InitiatorName: mpesaConfig.initiatorName,
+        SecurityCredential: securityCredential,
         CommandID: commandId,
         Amount: Math.round(amount),
         PartyA: mpesaConfig.shortcode,

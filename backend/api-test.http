@@ -105,24 +105,24 @@ Content-Type: application/json
 
 {
   "player1BetAmount": 100,
-  "player1TeamId": "team-uuid-placeholder",
+  "player1TeamId": "123e4567-e89b-12d3-a456-426614174000",
   "player1Formation": "4-3-3",
   "opponentEmail": "fan1@example.com"
 }
 
 ### Join match using invite code (replace code with actual)
-POST {{baseUrl}}/matches/join/ABC123
+POST {{baseUrl}}/matches/join/349BC859
 Authorization: Bearer {{playerToken}}
 Content-Type: application/json
 
 {
-  "player2TeamId": "team-uuid-placeholder",
+  "player2TeamId": "123e4567-e89b-12d3-a456-426614174000",
   "player2BetAmount": 150,
   "formation": "4-4-2"
 }
 
 ### Place player bet on a match
-POST {{baseUrl}}/matches/{{matchId}}/bet
+POST {{baseUrl}}/matches/8b09ce0d-d486-4bcb-b540-199fa3fd1f50/bet
 Authorization: Bearer {{playerToken}}
 Content-Type: application/json
 
@@ -131,7 +131,7 @@ Content-Type: application/json
 }
 
 ### Get match details
-GET {{baseUrl}}/matches/{{matchId}}
+GET {{baseUrl}}/matches/8b09ce0d-d486-4bcb-b540-199fa3fd1f50
 Authorization: Bearer {{playerToken}}
 
 ### ==================== BETS (FAN) ====================
@@ -142,13 +142,13 @@ Authorization: Bearer {{fanToken}}
 Content-Type: application/json
 
 {
-  "matchId": "{{matchId}}",
+  "matchId": "8b09ce0d-d486-4bcb-b540-199fa3fd1f50",
   "amount": 50,
-  "pickedPlayerId": "player-uuid"
+  "pickedPlayerId": "fd20f2aa-627b-49e0-8f5f-3ddbca3b4508"
 }
 
 ### Get bets for a match
-GET {{baseUrl}}/bets/match/{{matchId}}
+GET {{baseUrl}}/bets/match/8b09ce0d-d486-4bcb-b540-199fa3fd1f50
 Authorization: Bearer {{fanToken}}
 
 ### ==================== ADMIN ====================
@@ -166,11 +166,11 @@ GET {{baseUrl}}/admin/withdrawals
 Authorization: Bearer {{adminToken}}
 
 ### Approve a withdrawal (replace requestId)
-POST {{baseUrl}}/admin/withdrawals/{{requestId}}/approve
+POST {{baseUrl}}/admin/withdrawals/17a8f8ed-5712-4543-8a86-ed6f0133aba5/approve
 Authorization: Bearer {{adminToken}}
 
 ### Reject a withdrawal
-POST {{baseUrl}}/admin/withdrawals/{{requestId}}/reject
+POST {{baseUrl}}/admin/withdrawals/3275db64-6398-4c02-9ad6-0b7180f9ab8f/reject
 Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
@@ -188,6 +188,6 @@ Authorization: Bearer {{adminToken}}
 Content-Type: application/json
 
 {
-  "amount": 500,
+  "amount": 50,
   "phoneNumber": "254700000000"
 }

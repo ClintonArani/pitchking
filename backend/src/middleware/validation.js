@@ -6,10 +6,19 @@ export const validate = (schema) => {
       schema.parse(req.body);
       next();
     } catch (error) {
+      // Zod errors have `issues` (v3) or `errors` (v2)
+      const issues = error.issues || error.errors;
+      const errorMessages = issues 
+        ? issues.map(e => ({
+            field: e.path.join('.'),
+            message: e.message
+          }))
+        : [{ message: error.message }];
+      
       return res.status(400).json({
         success: false,
         message: 'Validation error',
-        errors: error.errors
+        errors: errorMessages
       });
     }
   };

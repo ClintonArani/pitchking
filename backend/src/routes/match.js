@@ -14,6 +14,6 @@ router.get('/:matchId', getMatchDetails);
 // Player-only routes
 router.post('/create', requirePlayer, validate(createMatchSchema), createMatch);
 router.post('/join/:inviteCode', requirePlayer, joinMatch);
-router.post('/:matchId/bet', requirePlayer, validate(placeBetSchema), placePlayerBet);
+router.post('/:matchId/bet', requirePlayer, placePlayerBet);
 
 export default router;
